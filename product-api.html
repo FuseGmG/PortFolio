@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product API Tester</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --border: #1e2330;
+      --get: #00c896;
+      --post: #f5a623;
+      --put: #4d9bff;
+      --del: #ff4d6d;
+      --text: #e8eaf0;
+      --muted: #5a6080;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 32px 40px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    header span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .base-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--get);
+      margin-left: auto;
+      background: rgba(0,200,150,0.08);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,200,150,0.2);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      flex: 1;
+    }
+
+    aside {
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+    }
+
+    .aside-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 20px 12px;
+    }
+
+    .endpoint-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 12px 20px;
+      text-align: left;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .endpoint-btn:hover { background: rgba(255,255,255,0.03); }
+    .endpoint-btn.active { background: rgba(255,255,255,0.05); }
+    .endpoint-btn.active[data-method="GET"] { border-left-color: var(--get); }
+    .endpoint-btn.active[data-method="POST"] { border-left-color: var(--post); }
+    .endpoint-btn.active[data-method="PUT"] { border-left-color: var(--put); }
+    .endpoint-btn.active[data-method="DELETE"] { border-left-color: var(--del); }
+
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      min-width: 52px;
+      text-align: center;
+    }
+    .badge-GET    { background: rgba(0,200,150,0.15); color: var(--get); }
+    .badge-POST   { background: rgba(245,166,35,0.15); color: var(--post); }
+    .badge-PUT    { background: rgba(77,155,255,0.15); color: var(--put); }
+    .badge-DELETE { background: rgba(255,77,109,0.15); color: var(--del); }
+
+    .endpoint-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #9aa0bc;
+    }
+    .endpoint-desc {
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    section.panel {
+      padding: 32px 40px;
+      max-width: 860px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .panel-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .panel-header .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--put);
+    }
+
+    textarea { resize: vertical; min-height: 140px; }
+
+    .btn-send {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 11px 28px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-send:hover { opacity: 0.88; }
+    .btn-send:active { transform: scale(0.97); }
+    .btn-GET    { background: var(--get);  color: #000; }
+    .btn-POST   { background: var(--post); color: #000; }
+    .btn-PUT    { background: var(--put);  color: #000; }
+    .btn-DELETE { background: var(--del);  color: #fff; }
+
+    .response-box {
+      margin-top: 28px;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .response-header span {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .status-ok  { background: rgba(0,200,150,0.15); color: var(--get); }
+    .status-err { background: rgba(255,77,109,0.15); color: var(--del); }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #a8b5d8;
+      min-height: 80px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🛒 Product API</h1>
+  <span>REST Tester</span>
+  <div class="base-url">localhost:5095</div>
+</header>
+
+<main>
+  <aside>
+    <div class="aside-title">Endpoints</div>
+
+    <button class="endpoint-btn active" data-method="GET" data-path="/api/Product" onclick="selectEndpoint(this)">
+      <span class="badge badge-GET">GET</span>
+      <div>
+        <div class="endpoint-label">/api/Product</div>
+        <span class="endpoint-desc">Alle Produkte abrufen</span>
+      </div>
+    </button>
+
+    <button class="endpoint-btn" data-method="POST" data-path="/api/Product" onclick="selectEndpoint(this)">
+      <span class="badge badge-POST">POST</span>
+      <div>
+        <div class="endpoint-label">/api/Product</div>
+        <span class="endpoint-desc">Produkt erstellen</span>
+      </div>
+    </button>
+
+    <button class="endpoint-btn" data-method="GET" data-path="/api/Product/{id}" onclick="selectEndpoint(this)">
+      <span class="badge badge-GET">GET</span>
+      <div>
+        <div class="endpoint-label">/api/Product/{id}</div>
+        <span class="endpoint-desc">Produkt nach ID</span>
+      </div>
+    </button>
+
+    <button class="endpoint-btn" data-method="PUT" data-path="/api/Product/{id}" onclick="selectEndpoint(this)">
+      <span class="badge badge-PUT">PUT</span>
+      <div>
+        <div class="endpoint-label">/api/Product/{id}</div>
+        <span class="endpoint-desc">Produkt aktualisieren</span>
+      </div>
+    </button>
+
+    <button class="endpoint-btn" data-method="DELETE" data-path="/api/Product/{id}" onclick="selectEndpoint(this)">
+      <span class="badge badge-DELETE">DEL</span>
+      <div>
+        <div class="endpoint-label">/api/Product/{id}</div>
+        <span class="endpoint-desc">Produkt löschen</span>
+      </div>
+    </button>
+  </aside>
+
+  <section class="panel" id="panel">
+    <!-- dynamisch befüllt -->
+  </section>
+</main>
+
+<script>
+  const BASE = 'http://localhost:5095';
+  let current = { method: 'GET', path: '/api/Product' };
+
+  function selectEndpoint(btn) {
+    document.querySelectorAll('.endpoint-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    current.method = btn.dataset.method;
+    current.path   = btn.dataset.path;
+    renderPanel();
+  }
+
+  function renderPanel() {
+    const { method, path } = current;
+    const needsId   = path.includes('{id}');
+    const needsBody = method === 'POST' || method === 'PUT';
+
+    const defaultBody = method === 'POST'
+      ? JSON.stringify({ name: "Neues Produkt", price: 9.99, stock: 100 }, null, 2)
+      : JSON.stringify({ id: 1, name: "Aktualisiert", price: 19.99, stock: 50 }, null, 2);
+
+    document.getElementById('panel').innerHTML = `
+      <div class="panel-header">
+        <span class="badge badge-${method}">${method}</span>
+        <h2>${path}</h2>
+      </div>
+
+      ${needsId ? `
+      <div class="form-group">
+        <label>Produkt ID</label>
+        <input type="number" id="inputId" placeholder="z.B. 1" min="1" />
+      </div>` : ''}
+
+      ${needsBody ? `
+      <div class="form-group">
+        <label>Request Body (JSON)</label>
+        <textarea id="inputBody">${defaultBody}</textarea>
+      </div>` : ''}
+
+      <button class="btn-send btn-${method}" onclick="sendRequest()">
+        ${method} Senden
+      </button>
+
+      <div class="divider"></div>
+
+      <div class="response-box">
+        <div class="response-header">
+          <span>Response</span>
+          <span id="statusChip" class="hidden"></span>
+        </div>
+        <pre id="responseOutput">// Klicke auf "Senden" um die Anfrage auszuführen...</pre>
+      </div>
+    `;
+  }
+
+  async function sendRequest() {
+    const { method, path } = current;
+    const needsId   = path.includes('{id}');
+    const needsBody = method === 'POST' || method === 'PUT';
+
+    let url = BASE + path;
+
+    if (needsId) {
+      const id = document.getElementById('inputId')?.value;
+      if (!id) { alert('Bitte eine ID eingeben!'); return; }
+      url = BASE + path.replace('{id}', id);
+    }
+
+    const options = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+
+    if (needsBody) {
+      const raw = document.getElementById('inputBody')?.value;
+      try { JSON.parse(raw); } catch { alert('Ungültiges JSON!'); return; }
+      options.body = raw;
+    }
+
+    const out   = document.getElementById('responseOutput');
+    const chip  = document.getElementById('statusChip');
+    out.innerHTML = '<span class="spinner"></span> Anfrage läuft...';
+    chip.className = 'hidden';
+
+    try {
+      const res  = await fetch(url, options);
+      const text = await res.text();
+      let pretty = text;
+      try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch {}
+
+      out.textContent = pretty || '(Leere Antwort)';
+      chip.textContent = `${res.status} ${res.statusText}`;
+      chip.className = `status-chip ${res.ok ? 'status-ok' : 'status-err'}`;
+    } catch (e) {
+      out.textContent = '❌ Fehler: ' + e.message + '\n\nLäuft der Server auf http://localhost:5095?';
+      chip.textContent = 'Fehler';
+      chip.className = 'status-chip status-err';
+    }
+  }
+
+  renderPanel();
+</script>
+</body>
+</html>
